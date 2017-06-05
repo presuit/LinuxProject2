@@ -11,7 +11,11 @@ declare -a arrMove=()
 copyindx=0
 moveindx=0
 
+pointC=0
+pointM=0
+
 Backtrace=0
+BacktraceM=0
 
 sortArr()
 {
@@ -903,10 +907,24 @@ Update()
 				then
 					tput cup 38 0
 					tput el
-					echo [31m"You can't copy ../!"
+					echo [31m"You can't copy ../"
 				else
+					for((Cindx = 0; Cindx < ${#arrCopy[@]}; Cindx+=2))
+					do
+						if [ ${arrCopy[$Cindx]} = ${arrNow[`expr $J \* 5 + $I`]} ]
+						then
+							pointC=`expr $pointC + 1`
+						fi
+					done
 
-					#can copy
+					if [ $pointC -gt 0 ]
+					then
+						tput cup 38 0
+						echo [31m"This file already in the queue"
+						pointC=0
+						continue
+					fi
+
 					arrCopy[$copyindx]=${arrNow[`expr $J \* 5 + $I`]}
 					copyindx=`expr $copyindx + 1`
 					arrCopy[$copyindx]=`pwd`
@@ -914,12 +932,12 @@ Update()
 
 					tput cup 38 0
 					tput el
-					echo [34m"copied : ${arrNow[`expr $J \* 5 + $I`]}"
+					echo [34m"copied(copy) : ${arrNow[`expr $J \* 5 + $I`]}"
 				fi
 			else
 				tput cup 38 0
 				tput el
-				echo [32m"your copy queue is full can't copy anymore!"
+				echo [32m"your copy queue is full. can't copy anymore"
 			fi;;	
 
 		'p')	
@@ -927,19 +945,11 @@ Update()
 			then
 				#can paste
 				for((copy_ = 0; copy_ < ${#arrCopy[@]}; copy_+=2))
-				do	
-					if [ "`stat -c %F ${arrCopy[$copy_]}`" = "디렉토리" ]
-					then
-                                                Backtrace=`pwd`
-                                                cd ${arrCopy[`expr $copy_ + 1`]}
-                                                cp -r ${arrCopy[$copy_]} $Backtrace
-                                                cd $Backtrace
-					else
-						Backtrace=`pwd`
-						cd ${arrCopy[`expr $copy_ + 1`]}
-						cp ${arrCopy[$copy_]} $Backtrace
-						cd $Backtrace
-					fi
+				do
+					Backtrace=`pwd`
+					cd ${arrCopy[`expr $copy_ + 1`]}
+					cp ${arrCopy[$copy_]} $Backtrace
+					cd $Backtrace
 				done
 					Backtrace=0
 					copyindx=0
@@ -954,11 +964,62 @@ Update()
 			fi;;
 	
 		'm') 
-			tput cup 38 0
-			echo m;;
+			if [ ${#arrMove[@]} -lt 6 ]
+			then
+				for((Mindx = 0; Mindx < ${#arrMove[@]}; Mindx+=2))
+				do
+					if [ ${arrMove[$Mindx]} = ${arrNow[`expr $J \* 5 + $I`]} ]
+					then
+						pointM=`expr $pointM + 1`
+					fi
+				done
+
+				if [ $pointM -gt 0 ]
+				then
+					tput cup 38 0
+					echo [31m"This file already in the queue"
+					pointM=0
+					continue
+				fi
+			
+				arrMove[$moveindx]=${arrNow[`expr $J \* 5 + $I`]}
+				moveindx=`expr $moveindx + 1`
+				arrMove[$moveindx]=`pwd`
+				moveindx=`expr $moveindx + 1`
+			
+                                tput cup 38 0
+                                tput el
+                                echo [34m"copied(move) : ${arrNow[`expr $J \* 5 + $I`]}"
 		
-		'v')	tput cup 38 0
-			echo v;;
+			else
+				tput cup 38 0
+				tput el
+				echo [32m"your copy queue is full. can't copy anymore"
+			fi;;
+			
+		
+		'v')	
+                        if [ ${#arrMove[@]} -gt 0 ]
+                        then
+                                #can paste
+                                for((copy_M = 0; copy_M < ${#arrMove[@]}; copy_M+=2))
+                                do
+                                        BacktraceM=`pwd`
+                                        cd ${arrMove[`expr $copy_M + 1`]}
+                                        mv ${arrMove[$copy_M]} $BacktraceM
+                                        cd $BacktraceM
+                                done
+                                        BacktraceM=0
+                                        moveindx=0
+                                        arrMove=()
+
+                                        tput clear
+                                        Update
+                        else
+                                tput cup 38 0
+                                tput el
+                                echo [32m"There is nothing in queue!"
+                        fi;;
 	esac
   done
 }
@@ -987,9 +1048,8 @@ done
 tput cup 37 0
 echo [0m"================================================================================================"
 }
-Update
 
-tput cup 38 0
+Update
 
 
 
