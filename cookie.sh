@@ -891,11 +891,11 @@ Update()
 			  if [ ${CanIUse[0]} ]
 			  then
                                 tput cup 38 0
-				tput el
+				tput ed
 				./${arrNow[$CalcIndx]}
 			  else
 				tput cup 38 0
-				tput el
+				tput ed
 				echo [32m"Sorry you can't excute the file"
 			  fi
 		    fi;;
